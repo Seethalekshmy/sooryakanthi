@@ -10,8 +10,8 @@
 
 
 ### Team Members
-- Team Lead: aalif - [college of engineering attingal]
-- Member 2: seethalekshmi G - [College of engineering attingal]
+- Team Lead: aalif - college of engineering attingal
+- Member 2: seethalekshmi G - College of engineering attingal
 
 
 ### Project Description
@@ -27,9 +27,13 @@ Indoor pan-tilt light pointer . Two hobby servos (yaw + pitch) and two LDRs with
 ## Technical Details
 ### Technologies/Components Used
 For Software:
-- [Free rtos, platform io ]
+- Free rtos, platform io 
 For Hardware:
-- [ESP32 , servo motor,LDR,3D printed enclousure,Buck converter]
+- ESP32 
+- servo motor
+- LDR,3D printed enclousure
+- Buck converter
+- 12v adaptor
 ### Implementation
 For Software:
 # Installation
