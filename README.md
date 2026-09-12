@@ -81,14 +81,8 @@ The system has three operating modes: **AUTO, MANUAL, and PARK**. In AUTO mode, 
 The firmware uses **FreeRTOS** to separate the real-time control loop from Wi-Fi, HTTP, and WebSocket communication. This allows the light-tracking system to continue operating even if the phone connection becomes slow or disconnected. The project combines embedded systems, sensor-based control, servo positioning, Wi-Fi communication, and a simple web-based interface into one intentionally unnecessary but technically interesting system.
 
 
-# Screenshots (Add at least 3)
-<img src="/WhatsApp Image 2026-09-12 at 10.20.43.jpeg">
-
-![Screenshot2](Add screenshot 2 here with proper name)
-*Add caption explaining what this shows*
-
-![Screenshot3](Add screenshot 3 here with proper name)
-*Add caption explaining what this shows*
+# Screenshots 
+<img src="/WhatsApp Image 2026-09-12 at 10.34.12.jpeg">
 
 # Diagrams
 ![Workflow](Add your workflow/architecture diagram here)
@@ -104,8 +98,7 @@ For Hardware:
 *Add caption explaining the schematic*
 
 # Build Photos
-![Components](Add photo of your components here)
-*List out all components shown*
+<img src="/WhatsApp Image 2026-09-12 at 10.20.43.jpeg">
 
 ![Build](Add photos of build process here)
 *Explain the build steps*
@@ -121,7 +114,8 @@ For Hardware:
 *Explain what the video demonstrates*
 
 # Additional Demos
-[Add any extra demo materials/links]
+<a href ="https://sooryaganthi-landing.vercel.app/">
+control landing page
 
 ## Team Contributions
 - Aalif Mohammad R S: Hardware Assembly and design
