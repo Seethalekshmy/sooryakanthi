@@ -85,8 +85,7 @@ The firmware uses **FreeRTOS** to separate the real-time control loop from Wi-Fi
 <img src="/WhatsApp Image 2026-09-12 at 10.34.12.jpeg">
 
 # Diagrams
-![Workflow](Add your workflow/architecture diagram here)
-*Add caption explaining your workflow*
+<img src="/WhatsApp Image 2026-09-12 at 10.43.16.jpeg">
 
 For Hardware:
 
@@ -99,12 +98,8 @@ For Hardware:
 
 # Build Photos
 <img src="/WhatsApp Image 2026-09-12 at 10.20.43.jpeg">
+<img src="/WhatsApp Image 2026-09-12 at 10.39.00.jpeg">
 
-![Build](Add photos of build process here)
-*Explain the build steps*
-
-![Final](Add photo of final product here)
-*Explain the final build*
 
 ### Project Demo
 # Video
