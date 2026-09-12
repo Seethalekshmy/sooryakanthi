@@ -82,8 +82,7 @@ The firmware uses **FreeRTOS** to separate the real-time control loop from Wi-Fi
 
 
 # Screenshots (Add at least 3)
-![Screenshot1](Add screenshot 1 here with proper name)
-*Add caption explaining what this shows*
+<img src="/WhatsApp Image 2026-09-12 at 10.20.43.jpeg">
 
 ![Screenshot2](Add screenshot 2 here with proper name)
 *Add caption explaining what this shows*
@@ -116,7 +115,9 @@ For Hardware:
 
 ### Project Demo
 # Video
-[Add your demo video link here]
+<video src="/WhatsApp Video 2026-09-12 at 10.24.53.mp4">
+<video src="/WhatsApp Video 2026-09-12 at 10.24.54.mp4">
+<video src="/WhatsApp Video 2026-09-12 at 10.24.55.mp4">
 *Explain what the video demonstrates*
 
 # Additional Demos
