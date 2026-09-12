@@ -124,7 +124,7 @@ For Hardware:
 
 ## Team Contributions
 - Aalif Mohammad R S: Hardware Assembly and design
-- NAMEE: UI/UX
+- Seetha Lekshmi: UI/UX
 
 ---
 Made with ❤️ at TinkerHub Useless Projects 
