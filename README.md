@@ -35,15 +35,51 @@ For Hardware:
 - Buck converter
 - 12v adaptor
 ### Implementation
-For Software:
-# Installation
-[commands]
+## Implementation
 
-# Run
-[commands]
+### Software
+
+The ESP32 firmware was developed using **PlatformIO with the Arduino framework**. The two LDR sensors are connected to ADC1 pins and continuously measure the light intensity from the left and right sides. The difference between these readings is used to determine the direction in which the yaw servo should move.
+
+Two servo motors control the **yaw and pitch** of the light pointer. In AUTO mode, the controller performs a search sequence to identify the brightest position and then enters LOCKED mode for fine tracking. A configurable deadzone prevents unnecessary servo movement when the LDR readings are already balanced.
+
+The ESP32 also creates a Wi-Fi access point and hosts a control webpage. Communication between the webpage and firmware is handled using **WebSockets**, allowing real-time transmission of servo positions, LDR readings, and system status. Serial commands are also provided as a backup control interface.
+
+### Installation
+
+Clone the project repository and open it in VS Code with PlatformIO installed.
+
+
+pio run
+pio run -t upload
+
+
+For the optional LittleFS webpage:
+
+pio run -t uploadfs
+
+
+### Run
+
+1. Power the ESP32 and the separate servo supply.
+2. Connect the phone to the **Sooryaganthi** Wi-Fi network.
+3. Open the ESP32 control page at `192.168.4.1`.
+4. Select **AUTO** to start light tracking.
+5. Select **MANUAL** to control the yaw and pitch from the phone.
+6. Use **Rescan** to force a new light-search sequence.
+7. Cover both LDRs to demonstrate the **PARK** state.
+
+
 
 ### Project Documentation
-For Software:
+## Project Summary
+
+**Sooryakanthi** is an indoor pan-tilt light pointer built using an **ESP32 DOIT DevKit V1**, two hobby servo motors, and two LDR sensors. The system automatically searches for the brightest light source in a room by comparing the intensity detected by the left and right LDRs. A vertical fin between the sensors creates a differential light-sensing mechanism that helps determine the direction of the light source.
+
+The system has three operating modes: **AUTO, MANUAL, and PARK**. In AUTO mode, the servos sweep the pan and tilt axes to locate the brightest position and then continuously fine-track it. In MANUAL mode, the user can control the yaw and pitch directly from a phone through a web interface hosted by the ESP32. PARK mode is activated when the environment becomes too dark, moving the pointer to a safe resting position until sufficient light is detected again.
+
+The firmware uses **FreeRTOS** to separate the real-time control loop from Wi-Fi, HTTP, and WebSocket communication. This allows the light-tracking system to continue operating even if the phone connection becomes slow or disconnected. The project combines embedded systems, sensor-based control, servo positioning, Wi-Fi communication, and a simple web-based interface into one intentionally unnecessary but technically interesting system.
+
 
 # Screenshots (Add at least 3)
 ![Screenshot1](Add screenshot 1 here with proper name)
