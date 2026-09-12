@@ -2,21 +2,21 @@
 
 
 
-# [Sooryakanthi] 🎯
+# Sooryakanthi
 
 
 ## Basic Details
-### Team Name: [inku minku]
+### Team Name: inku minku
 
 
 ### Team Members
-- Team Lead: [aalif] - [college of engineering attingal]
-- Member 2: [seethalekshmi G] - [College of engineering attingal]
+- Team Lead: aalif - [college of engineering attingal]
+- Member 2: seethalekshmi G - [College of engineering attingal]
 
 
 ### Project Description
-[Indoor pan-tilt light pointer . Two hobby servos (yaw + pitch) and two LDRs with a vertical fin between them. An ESP32 DOIT DevKit V1 hunts the brightest spot in the room, holds lock, and lets a phone take over from a page hosted on the board.
-]
+Indoor pan-tilt light pointer . Two hobby servos (yaw + pitch) and two LDRs with a vertical fin between them. An ESP32 DOIT DevKit V1 hunts the brightest spot in the room, holds lock, and lets a phone take over from a page hosted on the board.
+
 
 ### The Problem (that doesn't exist)
 [What ridiculous problem are you solving?]
