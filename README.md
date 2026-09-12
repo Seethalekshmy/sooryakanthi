@@ -19,10 +19,10 @@ Indoor pan-tilt light pointer . Two hobby servos (yaw + pitch) and two LDRs with
 
 
 ### The Problem (that doesn't exist)
-[What ridiculous problem are you solving?]
+What if your room’s brightest spot was just slightly out of reach? This project solves the completely unnecessary crisis of manually pointing a light at the brightest part of the room
 
 ### The Solution (that nobody asked for)
-[How are you solving it? Keep it fun!]
+Two LDRs act as the project’s tiny eyes, sensing which side is brighter. Two servos then swivel the light pointer left, right, up, or down until it finds the brightest spot. Once it locks on, you can either let the ESP32 keep hunting or take control from your phone through a web page hosted directly on the board. Basically: an unnecessarily intelligent light pointer that refuses to let the brightest spot escape.
 
 ## Technical Details
 ### Technologies/Components Used
