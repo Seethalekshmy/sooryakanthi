@@ -21,12 +21,16 @@
 // Config
 // ---------------------------------------------------------------------------
 
-enum ErrAxis { AXIS_YAW, AXIS_PITCH };
+enum ErrAxis
+{
+  AXIS_YAW,
+  AXIS_PITCH
+};
 
 static const char *WIFI_AP_SSID = "Sooryaganthi";
 static const char *WIFI_AP_PASS = "soorya123";
-static const char *WIFI_STA_SSID = "Chadbroksi";
-static const char *WIFI_STA_PASS = "69420xyz";
+static const char *WIFI_STA_SSID = "";
+static const char *WIFI_STA_PASS = "";
 
 static const int PIN_SERVO_YAW = 25;
 static const int PIN_SERVO_PITCH = 26;
@@ -78,21 +82,26 @@ static const float MANUAL_RATE = 3.0f;
 static const float SERVO_RATE_AUTO = SCAN_STEP;
 static const float SETTLED_DEG = 1.5f;
 
-static float clampf(float v, float lo, float hi) {
-  if (v < lo) {
+static float clampf(float v, float lo, float hi)
+{
+  if (v < lo)
+  {
     return lo;
   }
-  if (v > hi) {
+  if (v > hi)
+  {
     return hi;
   }
   return v;
 }
 
-static float clampYaw(float v) {
+static float clampYaw(float v)
+{
   return clampf(v, YAW_MIN, YAW_MAX);
 }
 
-static float clampPitch(float v) {
+static float clampPitch(float v)
+{
   return clampf(v, PITCH_MIN, PITCH_MAX);
 }
 
@@ -100,10 +109,23 @@ static float clampPitch(float v) {
 // Runtime
 // ---------------------------------------------------------------------------
 
-enum Mode : uint8_t { MODE_INIT, MODE_AUTO, MODE_MANUAL, MODE_PARK };
-enum AutoSub : uint8_t { SUB_SEARCH_YAW, SUB_SEARCH_PITCH, SUB_LOCK, SUB_NONE };
+enum Mode : uint8_t
+{
+  MODE_INIT,
+  MODE_AUTO,
+  MODE_MANUAL,
+  MODE_PARK
+};
+enum AutoSub : uint8_t
+{
+  SUB_SEARCH_YAW,
+  SUB_SEARCH_PITCH,
+  SUB_LOCK,
+  SUB_NONE
+};
 
-struct Runtime {
+struct Runtime
+{
   Mode mode;
   AutoSub autoSub;
   float cmdYaw;
@@ -133,63 +155,73 @@ static const UBaseType_t COMMS_PRIO = 3;
 static const uint32_t CONTROL_STACK = 4096;
 static const uint32_t COMMS_STACK = 4096;
 
-static void rtLock() {
+static void rtLock()
+{
   xSemaphoreTake(gRtLock, portMAX_DELAY);
 }
 
-static void rtUnlock() {
+static void rtUnlock()
+{
   xSemaphoreGive(gRtLock);
 }
 
-static const char *modeName(Mode m) {
-  switch (m) {
-    case MODE_AUTO:
-      return "AUTO";
-    case MODE_MANUAL:
-      return "MANUAL";
-    case MODE_PARK:
-      return "PARK";
-    default:
-      return "INIT";
+static const char *modeName(Mode m)
+{
+  switch (m)
+  {
+  case MODE_AUTO:
+    return "AUTO";
+  case MODE_MANUAL:
+    return "MANUAL";
+  case MODE_PARK:
+    return "PARK";
+  default:
+    return "INIT";
   }
 }
 
-static const char *subName(AutoSub s) {
-  switch (s) {
-    case SUB_SEARCH_YAW:
-      return "search_yaw";
-    case SUB_SEARCH_PITCH:
-      return "search_pitch";
-    case SUB_LOCK:
-      return "lock";
-    default:
-      return "none";
+static const char *subName(AutoSub s)
+{
+  switch (s)
+  {
+  case SUB_SEARCH_YAW:
+    return "search_yaw";
+  case SUB_SEARCH_PITCH:
+    return "search_pitch";
+  case SUB_LOCK:
+    return "lock";
+  default:
+    return "none";
   }
 }
 
-static const char *modeWire(Mode m) {
-  switch (m) {
-    case MODE_AUTO:
-      return "auto";
-    case MODE_MANUAL:
-      return "manual";
-    case MODE_PARK:
-      return "park";
-    default:
-      return "init";
+static const char *modeWire(Mode m)
+{
+  switch (m)
+  {
+  case MODE_AUTO:
+    return "auto";
+  case MODE_MANUAL:
+    return "manual";
+  case MODE_PARK:
+    return "park";
+  default:
+    return "init";
   }
 }
 
-static const char *subWire(AutoSub s) {
-  switch (s) {
-    case SUB_SEARCH_YAW:
-      return "search_yaw";
-    case SUB_SEARCH_PITCH:
-      return "search_pitch";
-    case SUB_LOCK:
-      return "lock";
-    default:
-      return "none";
+static const char *subWire(AutoSub s)
+{
+  switch (s)
+  {
+  case SUB_SEARCH_YAW:
+    return "search_yaw";
+  case SUB_SEARCH_PITCH:
+    return "search_pitch";
+  case SUB_LOCK:
+    return "lock";
+  default:
+    return "none";
   }
 }
 
@@ -200,7 +232,8 @@ static void requestRescan();
 // Sensors
 // ---------------------------------------------------------------------------
 
-static void sensorsBegin() {
+static void sensorsBegin()
+{
   analogReadResolution(ADC_BITS);
   analogSetPinAttenuation(PIN_LDR_L, ADC_11db);
   analogSetPinAttenuation(PIN_LDR_R, ADC_11db);
@@ -208,19 +241,23 @@ static void sensorsBegin() {
   pinMode(PIN_LDR_R, INPUT);
 }
 
-static uint16_t readLdr(int pin) {
+static uint16_t readLdr(int pin)
+{
   uint32_t acc = 0;
-  for (int i = 0; i < ADC_SAMPLES; i++) {
+  for (int i = 0; i < ADC_SAMPLES; i++)
+  {
     acc += (uint32_t)analogRead(pin);
   }
   uint16_t raw = (uint16_t)(acc / (uint32_t)ADC_SAMPLES);
-  if (INVERT_LIGHT) {
+  if (INVERT_LIGHT)
+  {
     return (uint16_t)(ADC_MAX - raw);
   }
   return raw;
 }
 
-static void sensorsRead() {
+static void sensorsRead()
+{
   rt.iL = readLdr(PIN_LDR_L);
   rt.iR = readLdr(PIN_LDR_R);
   rt.iAvg = (uint16_t)(((uint32_t)rt.iL + (uint32_t)rt.iR) / 2);
@@ -232,20 +269,25 @@ static void sensorsRead() {
 // Servos
 // ---------------------------------------------------------------------------
 
-static float rateToward(float current, float target, float maxDelta) {
+static float rateToward(float current, float target, float maxDelta)
+{
   float d = target - current;
-  if (d > maxDelta) {
+  if (d > maxDelta)
+  {
     return current + maxDelta;
   }
-  if (d < -maxDelta) {
+  if (d < -maxDelta)
+  {
     return current - maxDelta;
   }
   return target;
 }
 
-static void servoWriteAngle(int channel, float angle, float lo, float hi, bool invert) {
+static void servoWriteAngle(int channel, float angle, float lo, float hi, bool invert)
+{
   float clamped = clampf(angle, lo, hi);
-  if (invert) {
+  if (invert)
+  {
     clamped = lo + (hi - clamped);
   }
   clamped = clampf(clamped, 0.0f, 180.0f);
@@ -255,7 +297,8 @@ static void servoWriteAngle(int channel, float angle, float lo, float hi, bool i
   ledcWrite((uint8_t)channel, duty);
 }
 
-static void servosBegin() {
+static void servosBegin()
+{
   ledcSetup(LEDC_CH_YAW, 50, LEDC_BITS);
   ledcSetup(LEDC_CH_PITCH, 50, LEDC_BITS);
   ledcAttachPin(PIN_SERVO_YAW, LEDC_CH_YAW);
@@ -264,7 +307,8 @@ static void servosBegin() {
   servoWriteAngle(LEDC_CH_PITCH, BOOT_PITCH, PITCH_MIN, PITCH_MAX, INVERT_PITCH);
 }
 
-static void servosWrite() {
+static void servosWrite()
+{
   rt.cmdYaw = clampYaw(rt.cmdYaw);
   rt.cmdPitch = clampPitch(rt.cmdPitch);
 
@@ -282,42 +326,56 @@ static void servosWrite() {
 // MANUAL engine
 // ---------------------------------------------------------------------------
 
-enum ManualKind : uint8_t { MK_NONE, MK_SET, MK_NUDGE };
+enum ManualKind : uint8_t
+{
+  MK_NONE,
+  MK_SET,
+  MK_NUDGE
+};
 
 static ManualKind manualPending = MK_NONE;
 static float manualQYaw = 0;
 static float manualQPitch = 0;
 
-static void manualClear() {
+static void manualClear()
+{
   manualPending = MK_NONE;
 }
 
-static void manualOnEnter() {
+static void manualOnEnter()
+{
   manualClear();
   rt.autoSub = SUB_NONE;
   rt.forceTelemetry = true;
 }
 
-static void manualQueueSet(float yaw, float pitch) {
+static void manualQueueSet(float yaw, float pitch)
+{
   manualPending = MK_SET;
   manualQYaw = yaw;
   manualQPitch = pitch;
 }
 
-static void manualQueueNudge(float dyaw, float dpitch) {
+static void manualQueueNudge(float dyaw, float dpitch)
+{
   manualPending = MK_NUDGE;
   manualQYaw = dyaw;
   manualQPitch = dpitch;
 }
 
-static void manualStep() {
-  if (manualPending == MK_NONE) {
+static void manualStep()
+{
+  if (manualPending == MK_NONE)
+  {
     return;
   }
-  if (manualPending == MK_SET) {
+  if (manualPending == MK_SET)
+  {
     rt.cmdYaw = clampYaw(manualQYaw);
     rt.cmdPitch = clampPitch(manualQPitch);
-  } else if (manualPending == MK_NUDGE) {
+  }
+  else if (manualPending == MK_NUDGE)
+  {
     rt.cmdYaw = clampYaw(rt.cmdYaw + manualQYaw);
     rt.cmdPitch = clampPitch(rt.cmdPitch + manualQPitch);
   }
@@ -333,36 +391,47 @@ static uint16_t relockTicks = 0;
 static uint16_t wakeTicks = 0;
 static uint16_t ditherWait = 0;
 
-enum DitherPhase : uint8_t { DITHER_IDLE, DITHER_PLUS, DITHER_MINUS };
+enum DitherPhase : uint8_t
+{
+  DITHER_IDLE,
+  DITHER_PLUS,
+  DITHER_MINUS
+};
 static DitherPhase ditherPhase = DITHER_IDLE;
 static float ditherCenter = 0;
 static float ditherBest = 0;
 static float ditherBestAvg = 0;
 
-static bool settled(float applied, float cmd) {
+static bool settled(float applied, float cmd)
+{
   return fabsf(applied - cmd) <= SETTLED_DEG;
 }
 
-static void resetLockCounters() {
+static void resetLockCounters()
+{
   darkTicks = 0;
   relockTicks = 0;
   ditherWait = 0;
   ditherPhase = DITHER_IDLE;
 }
 
-static void rememberBest() {
-  if ((float)rt.iAvg > rt.bestAvg) {
+static void rememberBest()
+{
+  if ((float)rt.iAvg > rt.bestAvg)
+  {
     rt.bestAvg = (float)rt.iAvg;
     rt.bestYaw = rt.yaw;
     rt.bestPitch = rt.pitch;
   }
 }
 
-static void logSub() {
+static void logSub()
+{
   Serial.printf("%s/%s\n", modeName(rt.mode), subName(rt.autoSub));
 }
 
-static void autoEnterSearchYaw() {
+static void autoEnterSearchYaw()
+{
   rt.mode = MODE_AUTO;
   rt.autoSub = SUB_SEARCH_YAW;
   rt.bestAvg = -1.0f;
@@ -373,14 +442,16 @@ static void autoEnterSearchYaw() {
   logSub();
 }
 
-static void enterSearchPitch() {
+static void enterSearchPitch()
+{
   rt.autoSub = SUB_SEARCH_PITCH;
   rt.cmdYaw = clampYaw(rt.bestYaw);
   rt.cmdPitch = PITCH_MIN;
   logSub();
 }
 
-static void enterLock() {
+static void enterLock()
+{
   rt.autoSub = SUB_LOCK;
   rt.cmdYaw = clampYaw(rt.bestYaw);
   rt.cmdPitch = clampPitch(rt.bestPitch);
@@ -388,42 +459,58 @@ static void enterLock() {
   logSub();
 }
 
-static void parkEnter() {
+static void parkEnter()
+{
   rt.autoSub = SUB_NONE;
   rt.cmdPitch = PARK_PITCH;
   wakeTicks = 0;
   Serial.printf("%s/%s\n", modeName(MODE_PARK), subName(SUB_NONE));
 }
 
-static void stepErrorAxis() {
-  if (rt.iErr > DZ) {
-    if (ERR_AXIS == AXIS_YAW) {
+static void stepErrorAxis()
+{
+  if (rt.iErr > DZ)
+  {
+    if (ERR_AXIS == AXIS_YAW)
+    {
       rt.cmdYaw = clampYaw(rt.cmdYaw - STEP);
-    } else {
+    }
+    else
+    {
       rt.cmdPitch = clampPitch(rt.cmdPitch - STEP);
     }
-  } else if (rt.iErr < -DZ) {
-    if (ERR_AXIS == AXIS_YAW) {
+  }
+  else if (rt.iErr < -DZ)
+  {
+    if (ERR_AXIS == AXIS_YAW)
+    {
       rt.cmdYaw = clampYaw(rt.cmdYaw + STEP);
-    } else {
+    }
+    else
+    {
       rt.cmdPitch = clampPitch(rt.cmdPitch + STEP);
     }
   }
 }
 
-static float *ditherCmd() {
+static float *ditherCmd()
+{
   return (ERR_AXIS == AXIS_YAW) ? &rt.cmdPitch : &rt.cmdYaw;
 }
 
-static float ditherClamp(float v) {
+static float ditherClamp(float v)
+{
   return (ERR_AXIS == AXIS_YAW) ? clampPitch(v) : clampYaw(v);
 }
 
-static void stepDither() {
+static void stepDither()
+{
   float *cmd = ditherCmd();
-  if (ditherPhase == DITHER_IDLE) {
+  if (ditherPhase == DITHER_IDLE)
+  {
     ditherWait++;
-    if (ditherWait < DITHER_TICKS) {
+    if (ditherWait < DITHER_TICKS)
+    {
       return;
     }
     ditherWait = 0;
@@ -434,8 +521,10 @@ static void stepDither() {
     ditherPhase = DITHER_PLUS;
     return;
   }
-  if (ditherPhase == DITHER_PLUS) {
-    if ((float)rt.iAvg > ditherBestAvg) {
+  if (ditherPhase == DITHER_PLUS)
+  {
+    if ((float)rt.iAvg > ditherBestAvg)
+    {
       ditherBestAvg = (float)rt.iAvg;
       ditherBest = *cmd;
     }
@@ -443,19 +532,23 @@ static void stepDither() {
     ditherPhase = DITHER_MINUS;
     return;
   }
-  if ((float)rt.iAvg > ditherBestAvg) {
+  if ((float)rt.iAvg > ditherBestAvg)
+  {
     ditherBest = *cmd;
   }
   *cmd = ditherClamp(ditherBest);
   ditherPhase = DITHER_IDLE;
 }
 
-static void stepSearchYaw() {
-  if (!settled(rt.yaw, rt.cmdYaw)) {
+static void stepSearchYaw()
+{
+  if (!settled(rt.yaw, rt.cmdYaw))
+  {
     return;
   }
   rememberBest();
-  if (rt.cmdYaw >= YAW_MAX) {
+  if (rt.cmdYaw >= YAW_MAX)
+  {
     rt.cmdYaw = clampYaw(rt.bestYaw);
     enterSearchPitch();
     return;
@@ -463,12 +556,15 @@ static void stepSearchYaw() {
   rt.cmdYaw = clampYaw(rt.cmdYaw + SCAN_STEP);
 }
 
-static void stepSearchPitch() {
-  if (!settled(rt.yaw, rt.cmdYaw) || !settled(rt.pitch, rt.cmdPitch)) {
+static void stepSearchPitch()
+{
+  if (!settled(rt.yaw, rt.cmdYaw) || !settled(rt.pitch, rt.cmdPitch))
+  {
     return;
   }
   rememberBest();
-  if (rt.cmdPitch >= PITCH_MAX) {
+  if (rt.cmdPitch >= PITCH_MAX)
+  {
     rt.cmdYaw = clampYaw(rt.bestYaw);
     rt.cmdPitch = clampPitch(rt.bestPitch);
     enterLock();
@@ -477,24 +573,33 @@ static void stepSearchPitch() {
   rt.cmdPitch = clampPitch(rt.cmdPitch + SCAN_STEP);
 }
 
-static void stepLock() {
-  if (rt.iAvg < DARK) {
+static void stepLock()
+{
+  if (rt.iAvg < DARK)
+  {
     darkTicks++;
-    if (darkTicks >= DARK_TICKS) {
+    if (darkTicks >= DARK_TICKS)
+    {
       setMode(MODE_PARK);
       return;
     }
-  } else {
+  }
+  else
+  {
     darkTicks = 0;
   }
 
-  if (rt.bestAvg > 0.0f && (float)rt.iAvg < rt.bestAvg * RELOCK_RATIO) {
+  if (rt.bestAvg > 0.0f && (float)rt.iAvg < rt.bestAvg * RELOCK_RATIO)
+  {
     relockTicks++;
-    if (relockTicks >= RELOCK_TICKS) {
+    if (relockTicks >= RELOCK_TICKS)
+    {
       autoEnterSearchYaw();
       return;
     }
-  } else {
+  }
+  else
+  {
     relockTicks = 0;
   }
 
@@ -502,31 +607,38 @@ static void stepLock() {
   stepDither();
 }
 
-static void autoTrackerStep() {
-  switch (rt.autoSub) {
-    case SUB_SEARCH_YAW:
-      stepSearchYaw();
-      break;
-    case SUB_SEARCH_PITCH:
-      stepSearchPitch();
-      break;
-    case SUB_LOCK:
-      stepLock();
-      break;
-    default:
-      autoEnterSearchYaw();
-      break;
+static void autoTrackerStep()
+{
+  switch (rt.autoSub)
+  {
+  case SUB_SEARCH_YAW:
+    stepSearchYaw();
+    break;
+  case SUB_SEARCH_PITCH:
+    stepSearchPitch();
+    break;
+  case SUB_LOCK:
+    stepLock();
+    break;
+  default:
+    autoEnterSearchYaw();
+    break;
   }
 }
 
-static void parkStep() {
+static void parkStep()
+{
   rt.cmdPitch = PARK_PITCH;
-  if (rt.iAvg > (uint16_t)(DARK + PARK_HYST)) {
+  if (rt.iAvg > (uint16_t)(DARK + PARK_HYST))
+  {
     wakeTicks++;
-    if (wakeTicks >= WAKE_TICKS) {
+    if (wakeTicks >= WAKE_TICKS)
+    {
       setMode(MODE_AUTO);
     }
-  } else {
+  }
+  else
+  {
     wakeTicks = 0;
   }
 }
@@ -535,26 +647,32 @@ static void parkStep() {
 // Mode arbiter (callers already hold gRtLock)
 // ---------------------------------------------------------------------------
 
-static void setMode(Mode next) {
-  if (next == rt.mode) {
+static void setMode(Mode next)
+{
+  if (next == rt.mode)
+  {
     return;
   }
   rt.mode = next;
-  if (next == MODE_AUTO) {
+  if (next == MODE_AUTO)
+  {
     autoEnterSearchYaw();
     return;
   }
-  if (next == MODE_MANUAL) {
+  if (next == MODE_MANUAL)
+  {
     manualOnEnter();
     Serial.printf("%s/%s\n", modeName(rt.mode), subName(rt.autoSub));
     return;
   }
-  if (next == MODE_PARK) {
+  if (next == MODE_PARK)
+  {
     parkEnter();
   }
 }
 
-static void requestRescan() {
+static void requestRescan()
+{
   rt.mode = MODE_AUTO;
   autoEnterSearchYaw();
 }
@@ -570,39 +688,52 @@ static uint32_t lastTelemetryMs = 0;
 static uint8_t wsRx[256];
 static size_t wsRxLen = 0;
 
-static uint32_t rol32(uint32_t v, int b) {
+static uint32_t rol32(uint32_t v, int b)
+{
   return (v << b) | (v >> (32 - b));
 }
 
-static void sha1(const uint8_t *msg, size_t len, uint8_t digest[20]) {
+static void sha1(const uint8_t *msg, size_t len, uint8_t digest[20])
+{
   uint32_t h0 = 0x67452301UL, h1 = 0xEFCDAB89UL, h2 = 0x98BADCFEUL, h3 = 0x10325476UL,
            h4 = 0xC3D2E1F0UL;
   uint8_t block[64];
   const uint64_t bitlen = (uint64_t)len * 8ULL;
   size_t off = 0;
 
-  auto process = [&](const uint8_t *blk) {
+  auto process = [&](const uint8_t *blk)
+  {
     uint32_t w[80];
-    for (int t = 0; t < 16; t++) {
+    for (int t = 0; t < 16; t++)
+    {
       w[t] = ((uint32_t)blk[t * 4] << 24) | ((uint32_t)blk[t * 4 + 1] << 16) |
              ((uint32_t)blk[t * 4 + 2] << 8) | (uint32_t)blk[t * 4 + 3];
     }
-    for (int t = 16; t < 80; t++) {
+    for (int t = 16; t < 80; t++)
+    {
       w[t] = rol32(w[t - 3] ^ w[t - 8] ^ w[t - 14] ^ w[t - 16], 1);
     }
     uint32_t a = h0, b = h1, c = h2, d = h3, e = h4;
-    for (int t = 0; t < 80; t++) {
+    for (int t = 0; t < 80; t++)
+    {
       uint32_t f, k;
-      if (t < 20) {
+      if (t < 20)
+      {
         f = (b & c) | ((~b) & d);
         k = 0x5A827999UL;
-      } else if (t < 40) {
+      }
+      else if (t < 40)
+      {
         f = b ^ c ^ d;
         k = 0x6ED9EBA1UL;
-      } else if (t < 60) {
+      }
+      else if (t < 60)
+      {
         f = (b & c) | (b & d) | (c & d);
         k = 0x8F1BBCDCUL;
-      } else {
+      }
+      else
+      {
         f = b ^ c ^ d;
         k = 0xCA62C1D6UL;
       }
@@ -620,7 +751,8 @@ static void sha1(const uint8_t *msg, size_t len, uint8_t digest[20]) {
     h4 += e;
   };
 
-  while (len - off >= 64) {
+  while (len - off >= 64)
+  {
     process(msg + off);
     off += 64;
   }
@@ -628,16 +760,19 @@ static void sha1(const uint8_t *msg, size_t len, uint8_t digest[20]) {
   memset(block, 0, sizeof(block));
   memcpy(block, msg + off, rem);
   block[rem] = 0x80;
-  if (rem >= 56) {
+  if (rem >= 56)
+  {
     process(block);
     memset(block, 0, sizeof(block));
   }
-  for (int t = 0; t < 8; t++) {
+  for (int t = 0; t < 8; t++)
+  {
     block[63 - t] = (uint8_t)(bitlen >> (8 * t));
   }
   process(block);
   const uint32_t hs[5] = {h0, h1, h2, h3, h4};
-  for (int t = 0; t < 5; t++) {
+  for (int t = 0; t < 5; t++)
+  {
     digest[t * 4] = (uint8_t)(hs[t] >> 24);
     digest[t * 4 + 1] = (uint8_t)(hs[t] >> 16);
     digest[t * 4 + 2] = (uint8_t)(hs[t] >> 8);
@@ -645,135 +780,175 @@ static void sha1(const uint8_t *msg, size_t len, uint8_t digest[20]) {
   }
 }
 
-static void wsClose() {
-  if (wsLive) {
+static void wsClose()
+{
+  if (wsLive)
+  {
     wsClient.stop();
   }
   wsLive = false;
   wsRxLen = 0;
 }
 
-static bool wsSendFrame(uint8_t opcode, const uint8_t *data, size_t len) {
-  if (!wsLive || !wsClient.connected()) {
+static bool wsSendFrame(uint8_t opcode, const uint8_t *data, size_t len)
+{
+  if (!wsLive || !wsClient.connected())
+  {
     return false;
   }
   uint8_t hdr[4];
   size_t hdrn = 2;
   hdr[0] = (uint8_t)(0x80 | (opcode & 0x0F));
-  if (len < 126) {
+  if (len < 126)
+  {
     hdr[1] = (uint8_t)len;
-  } else if (len <= 0xFFFF) {
+  }
+  else if (len <= 0xFFFF)
+  {
     hdr[1] = 126;
     hdr[2] = (uint8_t)(len >> 8);
     hdr[3] = (uint8_t)len;
     hdrn = 4;
-  } else {
+  }
+  else
+  {
     return false;
   }
-  if (wsClient.write(hdr, hdrn) != hdrn) {
+  if (wsClient.write(hdr, hdrn) != hdrn)
+  {
     wsClose();
     return false;
   }
-  if (len > 0 && wsClient.write(data, len) != len) {
+  if (len > 0 && wsClient.write(data, len) != len)
+  {
     wsClose();
     return false;
   }
   return true;
 }
 
-static bool wsSendText(const char *text) {
+static bool wsSendText(const char *text)
+{
   return wsSendFrame(0x01, (const uint8_t *)text, strlen(text));
 }
 
-static bool jsonString(const char *json, const char *key, char *out, size_t outN) {
+static bool jsonString(const char *json, const char *key, char *out, size_t outN)
+{
   char pat[24];
   snprintf(pat, sizeof(pat), "\"%s\"", key);
   const char *p = strstr(json, pat);
-  if (!p) {
+  if (!p)
+  {
     return false;
   }
   p = strchr(p + strlen(pat), ':');
-  if (!p) {
+  if (!p)
+  {
     return false;
   }
   p++;
-  while (*p == ' ' || *p == '\t') {
+  while (*p == ' ' || *p == '\t')
+  {
     p++;
   }
-  if (*p != '\"') {
+  if (*p != '\"')
+  {
     return false;
   }
   p++;
   size_t i = 0;
-  while (*p && *p != '\"' && i + 1 < outN) {
+  while (*p && *p != '\"' && i + 1 < outN)
+  {
     out[i++] = *p++;
   }
   out[i] = '\0';
   return *p == '\"';
 }
 
-static bool jsonNumber(const char *json, const char *key, float *out) {
+static bool jsonNumber(const char *json, const char *key, float *out)
+{
   char pat[24];
   snprintf(pat, sizeof(pat), "\"%s\"", key);
   const char *p = strstr(json, pat);
-  if (!p) {
+  if (!p)
+  {
     return false;
   }
   p = strchr(p + strlen(pat), ':');
-  if (!p) {
+  if (!p)
+  {
     return false;
   }
   p++;
-  while (*p == ' ' || *p == '\t') {
+  while (*p == ' ' || *p == '\t')
+  {
     p++;
   }
-  if (!(*p == '-' || *p == '.' || (*p >= '0' && *p <= '9'))) {
+  if (!(*p == '-' || *p == '.' || (*p >= '0' && *p <= '9')))
+  {
     return false;
   }
   char *end = nullptr;
   float v = strtof(p, &end);
-  if (end == p || !isfinite(v)) {
+  if (end == p || !isfinite(v))
+  {
     return false;
   }
   *out = v;
   return true;
 }
 
-static void handleInbound(const char *msg) {
+static void handleInbound(const char *msg)
+{
   char type[16] = {0};
-  if (!jsonString(msg, "type", type, sizeof(type))) {
+  if (!jsonString(msg, "type", type, sizeof(type)))
+  {
     return;
   }
 
   rtLock();
-  if (strcmp(type, "setMode") == 0) {
+  if (strcmp(type, "setMode") == 0)
+  {
     char mode[12] = {0};
-    if (jsonString(msg, "mode", mode, sizeof(mode))) {
-      if (strcmp(mode, "auto") == 0) {
+    if (jsonString(msg, "mode", mode, sizeof(mode)))
+    {
+      if (strcmp(mode, "auto") == 0)
+      {
         setMode(MODE_AUTO);
-      } else if (strcmp(mode, "manual") == 0) {
+      }
+      else if (strcmp(mode, "manual") == 0)
+      {
         setMode(MODE_MANUAL);
       }
     }
-  } else if (strcmp(type, "set") == 0) {
+  }
+  else if (strcmp(type, "set") == 0)
+  {
     float yaw = 0;
     float pitch = 0;
-    if (jsonNumber(msg, "yaw", &yaw) && jsonNumber(msg, "pitch", &pitch)) {
+    if (jsonNumber(msg, "yaw", &yaw) && jsonNumber(msg, "pitch", &pitch))
+    {
       manualQueueSet(yaw, pitch);
     }
-  } else if (strcmp(type, "nudge") == 0) {
+  }
+  else if (strcmp(type, "nudge") == 0)
+  {
     float dyaw = 0;
     float dpitch = 0;
-    if (jsonNumber(msg, "dyaw", &dyaw) && jsonNumber(msg, "dpitch", &dpitch)) {
+    if (jsonNumber(msg, "dyaw", &dyaw) && jsonNumber(msg, "dpitch", &dpitch))
+    {
       manualQueueNudge(dyaw, dpitch);
     }
-  } else if (strcmp(type, "rescan") == 0) {
+  }
+  else if (strcmp(type, "rescan") == 0)
+  {
     requestRescan();
   }
   rtUnlock();
 }
 
-static void sendState(const Runtime &snap) {
+static void sendState(const Runtime &snap)
+{
   char json[256];
   snprintf(json, sizeof(json),
            "{\"type\":\"state\",\"mode\":\"%s\",\"sub\":\"%s\","
@@ -786,7 +961,8 @@ static void sendState(const Runtime &snap) {
   wsSendText(json);
 }
 
-static Runtime snapshotRt() {
+static Runtime snapshotRt()
+{
   rtLock();
   Runtime snap = rt;
   rt.forceTelemetry = false;
@@ -794,15 +970,18 @@ static Runtime snapshotRt() {
   return snap;
 }
 
-static void maybeBroadcast() {
-  if (!wsLive) {
+static void maybeBroadcast()
+{
+  if (!wsLive)
+  {
     return;
   }
   rtLock();
   const bool force = rt.forceTelemetry;
   const uint32_t now = millis();
   const bool due = (now - lastTelemetryMs) >= (TICK_MS * TELEMETRY_EVERY);
-  if (!force && !due) {
+  if (!force && !due)
+  {
     rtUnlock();
     return;
   }
@@ -813,20 +992,25 @@ static void maybeBroadcast() {
   sendState(snap);
 }
 
-static bool wsReadHeaders(WiFiClient &c, char *buf, size_t buflen) {
+static bool wsReadHeaders(WiFiClient &c, char *buf, size_t buflen)
+{
   size_t n = 0;
   const uint32_t start = millis();
-  while (n + 1 < buflen && (millis() - start) < 800) {
-    if (!c.connected()) {
+  while (n + 1 < buflen && (millis() - start) < 800)
+  {
+    if (!c.connected())
+    {
       return false;
     }
-    if (!c.available()) {
+    if (!c.available())
+    {
       delay(1);
       continue;
     }
     buf[n++] = (char)c.read();
     if (n >= 4 && buf[n - 4] == '\r' && buf[n - 3] == '\n' && buf[n - 2] == '\r' &&
-        buf[n - 1] == '\n') {
+        buf[n - 1] == '\n')
+    {
       buf[n] = '\0';
       return true;
     }
@@ -834,25 +1018,31 @@ static bool wsReadHeaders(WiFiClient &c, char *buf, size_t buflen) {
   return false;
 }
 
-static bool wsHandshake(WiFiClient &c) {
+static bool wsHandshake(WiFiClient &c)
+{
   char hdrs[768];
-  if (!wsReadHeaders(c, hdrs, sizeof(hdrs))) {
+  if (!wsReadHeaders(c, hdrs, sizeof(hdrs)))
+  {
     return false;
   }
   const char *p = strstr(hdrs, "Sec-WebSocket-Key:");
-  if (!p) {
+  if (!p)
+  {
     p = strstr(hdrs, "sec-websocket-key:");
   }
-  if (!p) {
+  if (!p)
+  {
     return false;
   }
   p += 18;
-  while (*p == ' ' || *p == '\t') {
+  while (*p == ' ' || *p == '\t')
+  {
     p++;
   }
   char key[32] = {0};
   size_t k = 0;
-  while (*p && *p != '\r' && *p != '\n' && k + 1 < sizeof(key)) {
+  while (*p && *p != '\r' && *p != '\n' && k + 1 < sizeof(key))
+  {
     key[k++] = *p++;
   }
 
@@ -873,17 +1063,21 @@ static bool wsHandshake(WiFiClient &c) {
   return c.print(resp) > 0;
 }
 
-static void wsAcceptNew() {
-  if (!wsServer.hasClient()) {
+static void wsAcceptNew()
+{
+  if (!wsServer.hasClient())
+  {
     return;
   }
   WiFiClient incoming = wsServer.available();
   incoming.setNoDelay(true);
-  if (wsLive) {
+  if (wsLive)
+  {
     Serial.println("ws replace");
     wsClose();
   }
-  if (!wsHandshake(incoming)) {
+  if (!wsHandshake(incoming))
+  {
     incoming.stop();
     return;
   }
@@ -894,115 +1088,142 @@ static void wsAcceptNew() {
   sendState(snapshotRt());
 }
 
-static void wsConsumeFrames() {
-  while (wsLive && wsClient.available() && wsRxLen < sizeof(wsRx)) {
+static void wsConsumeFrames()
+{
+  while (wsLive && wsClient.available() && wsRxLen < sizeof(wsRx))
+  {
     wsRx[wsRxLen++] = (uint8_t)wsClient.read();
   }
-  if (!wsLive) {
+  if (!wsLive)
+  {
     return;
   }
-  if (!wsClient.connected()) {
+  if (!wsClient.connected())
+  {
     Serial.println("ws disconnected");
     wsClose();
     return;
   }
 
   size_t off = 0;
-  while (wsRxLen - off >= 2) {
+  while (wsRxLen - off >= 2)
+  {
     const uint8_t *f = wsRx + off;
     const uint8_t opcode = f[0] & 0x0F;
     const bool masked = (f[1] & 0x80) != 0;
     uint64_t pay = (uint64_t)(f[1] & 0x7F);
     size_t hdr = 2;
-    if (pay == 126) {
-      if (wsRxLen - off < 4) {
+    if (pay == 126)
+    {
+      if (wsRxLen - off < 4)
+      {
         break;
       }
       pay = ((uint16_t)f[2] << 8) | f[3];
       hdr = 4;
-    } else if (pay == 127) {
+    }
+    else if (pay == 127)
+    {
       wsClose();
       return;
     }
-    if (!masked) {
+    if (!masked)
+    {
       wsClose();
       return;
     }
     hdr += 4;
-    if (wsRxLen - off < hdr + (size_t)pay) {
+    if (wsRxLen - off < hdr + (size_t)pay)
+    {
       break;
     }
     const uint8_t *mask = f + hdr - 4;
     const uint8_t *payload = f + hdr;
     char msg[193];
     const size_t n = pay < sizeof(msg) - 1 ? (size_t)pay : sizeof(msg) - 1;
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++)
+    {
       msg[i] = (char)(payload[i] ^ mask[i & 3]);
     }
     msg[n] = '\0';
 
-    if (opcode == 0x8) {
+    if (opcode == 0x8)
+    {
       Serial.println("ws disconnected");
       wsClose();
       return;
     }
-    if (opcode == 0x9) {
+    if (opcode == 0x9)
+    {
       wsSendFrame(0x0A, (const uint8_t *)msg, n);
-    } else if (opcode == 0x1 || opcode == 0x0) {
+    }
+    else if (opcode == 0x1 || opcode == 0x0)
+    {
       handleInbound(msg);
     }
 
     off += hdr + (size_t)pay;
   }
-  if (off > 0) {
+  if (off > 0)
+  {
     memmove(wsRx, wsRx + off, wsRxLen - off);
     wsRxLen -= off;
   }
 }
 
-static void wsPoll() {
+static void wsPoll()
+{
   wsAcceptNew();
-  if (wsLive) {
+  if (wsLive)
+  {
     wsConsumeFrames();
   }
 }
 
-static void commsPrintWifi() {
+static void commsPrintWifi()
+{
   Serial.println("WiFi:");
   Serial.printf("  AP SSID=%s  pass=%s\n", WIFI_AP_SSID, WIFI_AP_PASS);
   Serial.printf("  ws    ws://%s:%u\n", WiFi.softAPIP().toString().c_str(), WS_PORT);
   Serial.println("  UI    open web/index.html on the phone/PC (not hosted here)");
-  if (WiFi.status() == WL_CONNECTED) {
+  if (WiFi.status() == WL_CONNECTED)
+  {
     Serial.printf("  STA  ws://%s:%u\n", WiFi.localIP().toString().c_str(), WS_PORT);
   }
 }
 
-static void startWifi() {
+static void startWifi()
+{
   const bool useSta = WIFI_STA_SSID[0] != '\0';
   WiFi.mode(useSta ? WIFI_AP_STA : WIFI_AP);
   WiFi.setSleep(false);
   WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1),
                     IPAddress(255, 255, 255, 0));
-  if (!WiFi.softAP(WIFI_AP_SSID, WIFI_AP_PASS)) {
+  if (!WiFi.softAP(WIFI_AP_SSID, WIFI_AP_PASS))
+  {
     Serial.println("softAP failed");
   }
 
-  if (useSta) {
+  if (useSta)
+  {
     Serial.printf("joining %s", WIFI_STA_SSID);
     WiFi.begin(WIFI_STA_SSID, WIFI_STA_PASS);
     unsigned long start = millis();
-    while (WiFi.status() != WL_CONNECTED && (millis() - start) < 8000) {
+    while (WiFi.status() != WL_CONNECTED && (millis() - start) < 8000)
+    {
       delay(250);
       Serial.print('.');
     }
     Serial.println();
-    if (WiFi.status() != WL_CONNECTED) {
+    if (WiFi.status() != WL_CONNECTED)
+    {
       Serial.println("station join timed out; AP still available");
     }
   }
 }
 
-static void commsBegin() {
+static void commsBegin()
+{
   startWifi();
   wsServer.begin();
   wsServer.setNoDelay(true);
@@ -1017,14 +1238,16 @@ static bool verboseSensors = false;
 static char lineBuf[96];
 static size_t lineLen = 0;
 
-static void printStatus(const Runtime &snap) {
+static void printStatus(const Runtime &snap)
+{
   Serial.printf("%s/%s yaw=%.1f pitch=%.1f cmd=%.1f/%.1f iL=%u iR=%u iAvg=%u iErr=%d dark=%d best=%.0f\n",
                 modeName(snap.mode), subName(snap.autoSub), snap.yaw, snap.pitch, snap.cmdYaw,
                 snap.cmdPitch, snap.iL, snap.iR, snap.iAvg, (int)snap.iErr, snap.dark ? 1 : 0,
                 snap.bestAvg);
 }
 
-static void printHelp() {
+static void printHelp()
+{
   Serial.println("SLR tracker @ 115200");
   Serial.println("  auto | manual | park | rescan | status | verbose | wifi | ?");
   Serial.println("  set <yaw> <pitch>     MANUAL only");
@@ -1034,49 +1257,70 @@ static void printHelp() {
   commsPrintWifi();
 }
 
-static void handleLine(char *line) {
-  while (*line == ' ' || *line == '\t') {
+static void handleLine(char *line)
+{
+  while (*line == ' ' || *line == '\t')
+  {
     line++;
   }
-  if (*line == '\0') {
+  if (*line == '\0')
+  {
     return;
   }
-  if (strcmp(line, "?") == 0 || strcasecmp(line, "help") == 0) {
+  if (strcmp(line, "?") == 0 || strcasecmp(line, "help") == 0)
+  {
     printHelp();
     return;
   }
-  if (strcasecmp(line, "wifi") == 0) {
+  if (strcasecmp(line, "wifi") == 0)
+  {
     commsPrintWifi();
     return;
   }
-  if (strcasecmp(line, "verbose") == 0) {
+  if (strcasecmp(line, "verbose") == 0)
+  {
     verboseSensors = !verboseSensors;
     Serial.printf("verbose=%d\n", verboseSensors ? 1 : 0);
     return;
   }
-  if (strcasecmp(line, "status") == 0) {
+  if (strcasecmp(line, "status") == 0)
+  {
     printStatus(snapshotRt());
     return;
   }
 
   rtLock();
-  if (strcasecmp(line, "auto") == 0) {
+  if (strcasecmp(line, "auto") == 0)
+  {
     setMode(MODE_AUTO);
-  } else if (strcasecmp(line, "manual") == 0) {
+  }
+  else if (strcasecmp(line, "manual") == 0)
+  {
     setMode(MODE_MANUAL);
-  } else if (strcasecmp(line, "park") == 0) {
+  }
+  else if (strcasecmp(line, "park") == 0)
+  {
     setMode(MODE_PARK);
-  } else if (strcasecmp(line, "rescan") == 0) {
+  }
+  else if (strcasecmp(line, "rescan") == 0)
+  {
     requestRescan();
-  } else {
+  }
+  else
+  {
     float a = 0;
     float b = 0;
     char tag[12] = {0};
-    if (sscanf(line, "%11s %f %f", tag, &a, &b) == 3 && strcasecmp(tag, "set") == 0) {
+    if (sscanf(line, "%11s %f %f", tag, &a, &b) == 3 && strcasecmp(tag, "set") == 0)
+    {
       manualQueueSet(a, b);
-    } else if (sscanf(line, "%11s %f %f", tag, &a, &b) == 3 && strcasecmp(tag, "nudge") == 0) {
+    }
+    else if (sscanf(line, "%11s %f %f", tag, &a, &b) == 3 && strcasecmp(tag, "nudge") == 0)
+    {
       manualQueueNudge(a, b);
-    } else {
+    }
+    else
+    {
       rtUnlock();
       Serial.printf("unknown: %s\n", line);
       return;
@@ -1085,19 +1329,24 @@ static void handleLine(char *line) {
   rtUnlock();
 }
 
-static void pollSerial() {
-  while (Serial.available() > 0) {
+static void pollSerial()
+{
+  while (Serial.available() > 0)
+  {
     char c = (char)Serial.read();
-    if (c == '\r') {
+    if (c == '\r')
+    {
       continue;
     }
-    if (c == '\n') {
+    if (c == '\n')
+    {
       lineBuf[lineLen] = '\0';
       handleLine(lineBuf);
       lineLen = 0;
       continue;
     }
-    if (lineLen < sizeof(lineBuf) - 1) {
+    if (lineLen < sizeof(lineBuf) - 1)
+    {
       lineBuf[lineLen++] = c;
     }
   }
@@ -1107,56 +1356,65 @@ static void pollSerial() {
 // Control tick + FreeRTOS tasks
 // ---------------------------------------------------------------------------
 
-static void onTick() {
+static void onTick()
+{
   sensorsRead();
 
-  switch (rt.mode) {
-    case MODE_AUTO:
-      autoTrackerStep();
-      break;
-    case MODE_MANUAL:
-      manualStep();
-      break;
-    case MODE_PARK:
-      parkStep();
-      break;
-    default:
-      setMode(MODE_AUTO);
-      break;
+  switch (rt.mode)
+  {
+  case MODE_AUTO:
+    autoTrackerStep();
+    break;
+  case MODE_MANUAL:
+    manualStep();
+    break;
+  case MODE_PARK:
+    parkStep();
+    break;
+  default:
+    setMode(MODE_AUTO);
+    break;
   }
 
   servosWrite();
   rt.tick++;
   rt.tickMs = millis();
-  if ((rt.tick % TELEMETRY_EVERY) == 0) {
+  if ((rt.tick % TELEMETRY_EVERY) == 0)
+  {
     rt.forceTelemetry = true;
   }
 }
 
-static void controlTask(void * /*arg*/) {
+static void controlTask(void * /*arg*/)
+{
   TickType_t last = xTaskGetTickCount();
   const TickType_t period = pdMS_TO_TICKS(TICK_MS);
-  for (;;) {
+  for (;;)
+  {
     Runtime verboseSnap;
     bool doVerbose = false;
 
     rtLock();
     onTick();
-    if (verboseSensors) {
+    if (verboseSensors)
+    {
       verboseSnap = rt;
       doVerbose = true;
     }
     rtUnlock();
 
-    if (doVerbose) {
+    if (doVerbose)
+    {
       printStatus(verboseSnap);
     }
     vTaskDelayUntil(&last, period);
   }
 }
 
-static void commsTask(void * /*arg*/) {
-  for (;;) {
+static void commsTask(void * /*arg*/)
+{
+  for (;;)
+  {
     wsPoll();
     pollSerial();
     maybeBroadcast();
@@ -1164,14 +1422,17 @@ static void commsTask(void * /*arg*/) {
   }
 }
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
   delay(200);
 
   gRtLock = xSemaphoreCreateMutex();
-  if (gRtLock == nullptr) {
+  if (gRtLock == nullptr)
+  {
     Serial.println("rt mutex failed");
-    while (true) {
+    while (true)
+    {
       delay(1000);
     }
   }
@@ -1200,14 +1461,18 @@ void setup() {
                                              CONTROL_PRIO, nullptr, CONTROL_CORE);
   BaseType_t okCom = xTaskCreatePinnedToCore(commsTask, "comms", COMMS_STACK, nullptr, COMMS_PRIO,
                                              nullptr, COMMS_CORE);
-  if (okCtl != pdPASS || okCom != pdPASS) {
+  if (okCtl != pdPASS || okCom != pdPASS)
+  {
     Serial.println("task create failed");
-  } else {
+  }
+  else
+  {
     Serial.printf("tasks: control core %d prio %u, comms core %d prio %u\n", (int)CONTROL_CORE,
                   (unsigned)CONTROL_PRIO, (int)COMMS_CORE, (unsigned)COMMS_PRIO);
   }
 }
 
-void loop() {
+void loop()
+{
   vTaskDelay(pdMS_TO_TICKS(1000));
 }
