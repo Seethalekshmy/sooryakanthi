@@ -1,1 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SLR tracker</title>
+<style>
+  :root {
+    --bg: #14110e; --panel: #1e1914; --line: #3a3228; --text: #f3eadc;
+    --muted: #9d8f7c; --yaw: #7eb8e6; --pitch: #e2a14a; --ok: #8fbf6a;
+    --bad: #d36b5a; --lock: #e2a14a;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; min-height: 100%; background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", system-ui, sans-serif; user-select: none;
+    overscroll-behavior: none;
+  }
+  body { max-width: 520px; margin: 0 auto; padding: 12px 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; }
+  h1 { font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase; margin: 0; }
+  .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .badge { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .badge.on { color: var(--ok); border-color: #3f5c2e; }
+  .badge.off { color: var(--bad); border-color: #6a332c; }
+  .phase {
+    text-align: center; font-size: 22px; letter-spacing: 0.16em; font-weight: 650;
+    padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel);
+  }
+  .modes, .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  button {
+    background: #2a231c; color: var(--text); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px 0; font: inherit; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12px;
+  }
+  button.on { background: #3a3228; border-color: var(--lock); color: var(--lock); }
+  button:active { background: #3a3228; }
+  .bars {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px 14px;
+  }
+  .bar-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .bar-col span { font-size: 11px; letter-spacing: 0.14em; color: var(--muted); }
+  .well { width: 100%; height: 110px; background: #16120e; border-radius: 8px; overflow: hidden; display: flex; align-items: flex-end; border: 1px solid var(--line); }
+  .fill { width: 100%; height: 0%; transition: height 80ms linear; }
+  .fill.l { background: var(--yaw); }
+  .fill.r { background: var(--pitch); }
+  .readouts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  .card .lbl { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .card .val { font-variant-numeric: tabular-nums; font-size: 28px; font-weight: 650; }
+  .card.yaw .val { color: var(--yaw); }
+  .card.pitch .val { color: var(--pitch); }
+  .pad-wrap { display: flex; justify-content: center; }
+  .pad {
+    position: relative; width: min(68vw, 280px); aspect-ratio: 1; border-radius: 50%;
+    background: radial-gradient(circle at 50% 50%, #2a231c 0%, #181410 70%);
+    border: 1px solid var(--line); touch-action: none;
+  }
+  body.locked .pad { opacity: 0.4; pointer-events: none; }
+  body.locked input[type=range] { opacity: 0.45; pointer-events: none; }
+  .pad::before, .pad::after { content: ""; position: absolute; left: 50%; top: 50%; background: #3d342b; }
+  .pad::before { width: 1px; height: 72%; transform: translate(-50%, -50%); }
+  .pad::after { height: 1px; width: 72%; transform: translate(-50%, -50%); }
+  .knob { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: #f3eadc; box-shadow: 0 6px 16px #0008; pointer-events: none; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  label { width: 48px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  input[type=range] { flex: 1; accent-color: var(--yaw); }
+  input#pitch { accent-color: var(--pitch); }
+  input[type=text] {
+    flex: 1; background: #16120e; color: var(--text); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 13px;
+  }
+  .hint { color: var(--muted); font-size: 11px; text-align: center; }
+  .meta { color: var(--muted); font-size: 11px; text-align: center; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>SLR tracker</h1>
+      <div class="sub">brightest-spot light lock</div>
+    </div>
+    <div id="status" class="badge off">offline</div>
+  </header>
+  <div class="card">
+    <div class="row">
+      <label>Host</label>
+      <input id="host" type="text" spellcheck="false" value="192.168.4.1">
+      <button type="button" id="reconnect" style="padding:12px 14px;width:auto">Go</button>
+    </div>
+  </div>
+  <div id="phase" class="phase">CONNECTING</div>
+  <div class="modes">
+    <button type="button" id="btnAuto">Auto</button>
+    <button type="button" id="btnManual">Manual</button>
+  </div>
+  <div class="bars">
+    <div class="bar-col"><span>LEFT iL</span><div class="well"><div id="barL" class="fill l"></div></div><span id="vL">0</span></div>
+    <div class="bar-col"><span>RIGHT iR</span><div class="well"><div id="barR" class="fill r"></div></div><span id="vR">0</span></div>
+  </div>
+  <div class="readouts">
+    <div class="card yaw"><div class="lbl">Yaw</div><div class="val"><span id="yawNow">90</span>°</div></div>
+    <div class="card pitch"><div class="lbl">Pitch</div><div class="val"><span id="pitchNow">90</span>°</div></div>
+  </div>
+  <div class="pad-wrap"><div id="pad" class="pad"><div id="knob" class="knob"></div></div></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:10px">
+    <div class="row"><label>Yaw</label><input id="yaw" type="range" min="0" max="180" value="90"></div>
+    <div class="row"><label>Pitch</label><input id="pitch" type="range" min="20" max="160" value="90"></div>
+  </div>
+  <div class="btns">
+    <button type="button" id="rescan">Rescan</button>
+    <button type="button" id="center">Center</button>
+  </div>
+  <div class="hint">MCU has no webpage — this file talks to ws://host:81 · join Wi-Fi Sooryaganthi first</div>
+  <div id="meta" class="meta"></div>
+<script>
+const PITCH_MIN = 20, PITCH_MAX = 160, ADC_MAX = 4095;
+const DEFAULT_HOST = "192.168.4.1";
+const $ = (id) => document.getElementById(id);
+const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+let ws = null, yaw = 90, pitch = 90, dragging = false, lastMode = "";
+let pending = null, lastSend = 0, reconnectTimer = null;
 
+function wsHost() {
+  const q = new URLSearchParams(location.search).get("host");
+  if (q) return q;
+  try {
+    const saved = localStorage.getItem("slrHost");
+    if (saved) return saved;
+  } catch (e) {}
+  if (location.protocol === "http:" || location.protocol === "https:") {
+    if (location.hostname && location.hostname !== "localhost") return location.hostname;
+  }
+  return DEFAULT_HOST;
+}
+
+function setBadge(on) {
+  const el = $("status");
+  el.textContent = on ? "live" : "offline";
+  el.className = "badge " + (on ? "on" : "off");
+}
+function phaseText(s) {
+  if (s.mode === "park") return "PARKED";
+  if (s.mode === "manual") return "MANUAL";
+  if (s.mode === "init") return "INIT";
+  if (s.sub === "search_yaw") return "SCANNING YAW";
+  if (s.sub === "search_pitch") return "SCANNING PITCH";
+  if (s.sub === "lock") return "LOCKED";
+  return "AUTO";
+}
+function placeKnob() {
+  if (dragging) return;
+  const pad = $("pad");
+  const max = pad.clientWidth / 2 - 26;
+  const nx = yaw / 180 * 2 - 1;
+  const ny = -(((pitch - PITCH_MIN) / (PITCH_MAX - PITCH_MIN)) * 2 - 1);
+  $("knob").style.transform = "translate(" + (nx * max) + "px," + (ny * max) + "px)";
+}
+function send(obj) {
+  pending = obj;
+  flush();
+}
+function flush() {
+  if (!pending || !ws || ws.readyState !== 1) return;
+  const now = performance.now();
+  if (now - lastSend < 50) { setTimeout(flush, 50); return; }
+  lastSend = now;
+  const msg = pending; pending = null;
+  ws.send(JSON.stringify(msg));
+}
+function applyPad(ev) {
+  const r = $("pad").getBoundingClientRect();
+  const max = r.width / 2 - 26;
+  let dx = ev.clientX - (r.left + r.width / 2);
+  let dy = ev.clientY - (r.top + r.height / 2);
+  const mag = Math.hypot(dx, dy);
+  if (mag > max) { dx *= max / mag; dy *= max / mag; }
+  $("knob").style.transform = "translate(" + dx + "px," + dy + "px)";
+  yaw = Math.round(clamp((dx / max + 1) * 90, 0, 180));
+  pitch = Math.round(clamp(PITCH_MIN + (-dy / max + 1) * 0.5 * (PITCH_MAX - PITCH_MIN), PITCH_MIN, PITCH_MAX));
+  $("yaw").value = yaw; $("pitch").value = pitch;
+  send({ type: "set", yaw: yaw, pitch: pitch });
+}
+function render(s) {
+  $("phase").textContent = phaseText(s);
+  $("btnAuto").className = s.mode === "auto" ? "on" : "";
+  $("btnManual").className = s.mode === "manual" ? "on" : "";
+  document.body.classList.toggle("locked", s.mode !== "manual");
+  $("barL").style.height = Math.round(clamp(s.iL / ADC_MAX, 0, 1) * 100) + "%";
+  $("barR").style.height = Math.round(clamp(s.iR / ADC_MAX, 0, 1) * 100) + "%";
+  $("vL").textContent = s.iL;
+  $("vR").textContent = s.iR;
+  $("yawNow").textContent = Math.round(s.yaw);
+  $("pitchNow").textContent = Math.round(s.pitch);
+  $("meta").textContent = "iAvg " + s.iAvg + "   iErr " + s.iErr + (s.dark ? "   DARK" : "");
+  const snap = s.mode !== "manual" || lastMode !== "manual" || !dragging;
+  if (snap) {
+    yaw = s.yaw; pitch = s.pitch;
+    $("yaw").value = yaw; $("pitch").value = pitch;
+    placeKnob();
+  }
+  lastMode = s.mode;
+}
+function connect() {
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+  if (ws) { try { ws.onclose = null; ws.close(); } catch (e) {} }
+  const host = $("host").value.trim() || DEFAULT_HOST;
+  try { localStorage.setItem("slrHost", host); } catch (e) {}
+  ws = new WebSocket("ws://" + host + ":81/");
+  ws.onopen = () => setBadge(true);
+  ws.onclose = () => { setBadge(false); reconnectTimer = setTimeout(connect, 1000); };
+  ws.onerror = () => { try { ws.close(); } catch (e) {} };
+  ws.onmessage = (e) => { try { render(JSON.parse(e.data)); } catch (err) {} };
+}
+$("host").value = wsHost();
+$("reconnect").onclick = connect;
+$("host").addEventListener("keydown", (e) => { if (e.key === "Enter") connect(); });
+$("btnAuto").onclick = () => send({ type: "setMode", mode: "auto" });
+$("btnManual").onclick = () => send({ type: "setMode", mode: "manual" });
+$("rescan").onclick = () => send({ type: "rescan" });
+$("center").onclick = () => send({ type: "set", yaw: 90, pitch: 90 });
+$("yaw").addEventListener("input", (e) => { yaw = +e.target.value; placeKnob(); send({ type: "set", yaw: yaw, pitch: pitch }); });
+$("pitch").addEventListener("input", (e) => { pitch = +e.target.value; placeKnob(); send({ type: "set", yaw: yaw, pitch: pitch }); });
+const pad = $("pad");
+pad.addEventListener("pointerdown", (e) => { dragging = true; pad.setPointerCapture(e.pointerId); applyPad(e); });
+pad.addEventListener("pointermove", (e) => { if (dragging) applyPad(e); });
+pad.addEventListener("pointerup", () => { dragging = false; });
+pad.addEventListener("pointercancel", () => { dragging = false; });
+connect();
+placeKnob();
+</script>
+</body>
+</html>
