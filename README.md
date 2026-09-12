@@ -10,7 +10,7 @@
 
 
 ### Team Members
-- Team Lead: aalif - college of engineering attingal
+- Team Lead: Aalif Mohammad R S - college of engineering attingal
 - Member 2: seethalekshmi G - College of engineering attingal
 
 
@@ -87,9 +87,8 @@ For Hardware:
 [Add any extra demo materials/links]
 
 ## Team Contributions
-- [Name 1]: [Specific contributions]
-- [Name 2]: [Specific contributions]
-- [Name 3]: [Specific contributions]
+- Aalif Mohammad R S: Hardware Assembly and design
+- NAMEE: UI/UX
 
 ---
 Made with ❤️ at TinkerHub Useless Projects 
