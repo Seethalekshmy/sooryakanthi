@@ -2,20 +2,21 @@
 
 
 
-# [Project Name] 🎯
+# [Sooryakanthi] 🎯
 
 
 ## Basic Details
-### Team Name: [Name]
+### Team Name: [inku minku]
 
 
 ### Team Members
-- Team Lead: [Name] - [College]
-- Member 2: [Name] - [College]
-- Member 3: [Name] - [College]
+- Team Lead: [aalif] - [college of engineering attingal]
+- Member 2: [seethalekshmi G] - [College of engineering attingal]
+
 
 ### Project Description
-[2-3 lines about what your project does]
+[Indoor pan-tilt light pointer . Two hobby servos (yaw + pitch) and two LDRs with a vertical fin between them. An ESP32 DOIT DevKit V1 hunts the brightest spot in the room, holds lock, and lets a phone take over from a page hosted on the board.
+]
 
 ### The Problem (that doesn't exist)
 [What ridiculous problem are you solving?]
@@ -26,16 +27,9 @@
 ## Technical Details
 ### Technologies/Components Used
 For Software:
-- [Languages used]
-- [Frameworks used]
-- [Libraries used]
-- [Tools used]
-
+- [Free rtos, platform io ]
 For Hardware:
-- [List main components]
-- [List specifications]
-- [List tools required]
-
+- [ESP32 , servo motor,LDR,3D printed enclousure,Buck converter]
 ### Implementation
 For Software:
 # Installation
